@@ -1,0 +1,33 @@
+{
+  "generatedAt": "2026-09-25T10:27:22.973Z",
+  "chunkSize": 1000,
+  "chunkOverlap": 150,
+  "totalChunks": 181,
+  "totalPages": 55,
+  "documents": [
+    {
+      "source": "AO-153-s2004-Good-Manufacturing-Practice.pdf",
+      "title": "AO 153 s. 2004 · Good Manufacturing Practice (GMP)",
+      "pages": 25,
+      "chunks": 81
+    },
+    {
+      "source": "AO-2014-0030-A-Labeling-Amendment.pdf",
+      "title": "AO 2014-0030-A · Labeling Amendment (Sweetened Beverages)",
+      "pages": 5,
+      "chunks": 16
+    },
+    {
+      "source": "AO-2014-0030-Food-Labeling.pdf",
+      "title": "AO 2014-0030 · Labeling of Prepackaged Food",
+      "pages": 20,
+      "chunks": 73
+    },
+    {
+      "source": "FDA-LTO-Initial-Application-Food-Manufacturers.pdf",
+      "title": "FDA Citizen’s Charter · LTO Initial Application (Food Manufacturers)",
+      "pages": 5,
+      "chunks": 11
+    }
+  ]
+}
