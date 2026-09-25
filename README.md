@@ -57,6 +57,7 @@ Requirements: Node 18.18+, an OpenAI API key, and an [Upstash Vector](https://co
 npm install
 cp .env.example .env.local       # Windows PowerShell: copy .env.example .env.local
 # edit .env.local → OPENAI_API_KEY, UPSTASH_VECTOR_REST_URL, UPSTASH_VECTOR_REST_TOKEN
+# (+ OPENAI_BASE_URL if your key is issued through a gateway such as Vocareum)
 
 npm run seed:dry                 # optional: chunk only, no API calls → inspect .seed-preview.json
 npm run seed                     # chunk + embed + upsert (prints chunk stats)
@@ -69,7 +70,7 @@ If you change chunk settings or remove a PDF, run `npm run seed:reset` so stale 
 
 1. Push this repo to GitHub. `.env.local` is git-ignored, so keys never leave your machine.
 2. On [vercel.com/new](https://vercel.com/new), import the repo. The framework is detected as Next.js automatically.
-3. Before clicking **Deploy**, open **Environment Variables** and add `OPENAI_API_KEY`, `UPSTASH_VECTOR_REST_URL`, and `UPSTASH_VECTOR_REST_TOKEN` for Production, Preview, and Development.
+3. Before clicking **Deploy**, open **Environment Variables** and add `OPENAI_API_KEY`, `UPSTASH_VECTOR_REST_URL`, `UPSTASH_VECTOR_REST_TOKEN` (and `OPENAI_BASE_URL` if you use one) for Production, Preview, and Development.
 4. Deploy, then open the URL in an incognito window and ask a few questions.
 
 You don't need to seed again for production. The deployed app queries the same Upstash index you seeded locally.

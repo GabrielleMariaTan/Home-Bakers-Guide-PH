@@ -27,7 +27,6 @@ export const corpus = {
   outOfScope: [
     'recipes and baking technique',
     'BIR/tax registration, DTI business-name registration, or barangay/mayor’s permits',
-    'fees or processing times not listed in the FDA Citizen’s Charter excerpt',
     'rules issued after these documents',
   ],
   /** Starter questions shown in the empty state. Pick ones that show the bot at its best. */
@@ -77,7 +76,7 @@ export const corpus = {
 /** Retrieval knobs. Tuned in Phase 5 — see README "Tuning log". */
 export const retrieval = {
   /** How many chunks one tool call returns to the model. */
-  topK: 5,
+  topK: 6,
   /**
    * Cosine-similarity floor (Upstash returns 0–1, higher = closer).
    * Anything below this is treated as "not relevant" and dropped so the model

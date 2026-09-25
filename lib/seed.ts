@@ -15,15 +15,13 @@
  *  - Loads .env.local (the starter's `dotenv/config` only read .env).
  *  - Writes lib/corpus-manifest.json so the UI can show what's indexed.
  */
-import { config as loadEnv } from 'dotenv';
-loadEnv({ path: '.env.local' });
-loadEnv();
+import './load-env';
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Index } from '@upstash/vector';
 import { embedMany } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { openai } from './openai';
 // Import the inner module: the package entry has a debug branch that can try
 // to read a test PDF when loaded from ESM.
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';

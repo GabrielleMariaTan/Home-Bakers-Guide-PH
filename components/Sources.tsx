@@ -6,8 +6,10 @@ import type { SearchResult } from '@/lib/types';
 
 /** Relevance label from cosine similarity — friendlier than a raw number. */
 function relevance(score: number) {
-  if (score >= 0.6) return { label: 'Strong match', cls: 'rel-strong' };
-  if (score >= 0.45) return { label: 'Good match', cls: 'rel-good' };
+  // Calibrated on this corpus: on-topic passages score ~0.78–0.88, loosely
+  // related ones ~0.70–0.77 (OCR'd legal text scores high across the board).
+  if (score >= 0.83) return { label: 'Strong match', cls: 'rel-strong' };
+  if (score >= 0.77) return { label: 'Good match', cls: 'rel-good' };
   return { label: 'Weak match', cls: 'rel-weak' };
 }
 
