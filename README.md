@@ -4,7 +4,7 @@ A public, streaming chat app for **home-based bakers in the Philippines who want
 
 > Information only, not legal advice. Documents checked against fda.gov.ph in September 2026.
 
-**Live app:** https://YOUR-APP.vercel.app  ·  **Repo:** https://github.com/GabrielleMariaTan/Home-Bakers-Guide-PH  ·  **Stack:** Next.js 15 · Vercel AI SDK 4 (`streamText` + tools) · Upstash Vector · OpenAI `gpt-4o-mini` + `text-embedding-3-small`
+**Live app:** https://home-bakers-guide-ph.vercel.app  ·  **Repo:** https://github.com/GabrielleMariaTan/Home-Bakers-Guide-PH  ·  **Stack:** Next.js 15 · Vercel AI SDK 4 (`streamText` + tools) · Upstash Vector · OpenAI `gpt-4o-mini` + `text-embedding-3-small`
 
 ---
 
@@ -130,7 +130,8 @@ Tested 14 questions locally (labels, allergens, LTO, fees, GMP, language, exempt
 - Deep links into the PDF page (`/docs/file.pdf#page=N`)
 - Relevance labels and a similarity floor, so answers are honest about weak matches
 - `seed:dry` preview and chunk-length statistics for checking chunking before spending on embeddings
-- Generated Open Graph image, dark mode, mobile layout
+- Bakery-themed UI inspired by the free [Frost Bakery template by templatemo](https://templatemo.com/tm-613-frost-bakery): terracotta palette, Lora + Manrope fonts, fixed sidebar with the "path to selling" and the indexed documents, a clickable topic ticker, and step cards with starter questions
+- Generated Open Graph image and a mobile layout with a slide-out menu
 - Abuse guards on the public endpoint: input length cap, history window, `maxTokens`
 
 ## Known limitations
