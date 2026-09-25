@@ -88,30 +88,43 @@ You don't need to seed again for production. The deployed app queries the same U
 | Boundaries | Chunks never cross a page or a detected section heading | Every citation points to one page, and "Allergen" rules don't bleed into "Storage" rules. |
 | Metadata | `title`, `source`, `page`, `section`, `chunk`, `text` | `title` + `page` for citations, `section` shown on the source card, `source` for the "Open page N" deep link. |
 | Embedded text | `Document: … / Section: … / <chunk>` | Clauses often don't repeat their topic ("It shall be declared in bold type…"); prepending the section heading ("9. Food Allergen Information") helps them match the question. |
-| topK / minScore | **5 / 0.35** | Starting values; see the tuning log. |
+| topK / minScore | **6 / 0.70** | Tuned from measured scores; see the tuning log. |
 
 Result: **181 chunks** (min 83 / median 676 / p95 988 / max 1000 chars).
 
 ## Tuning log (Phase 5)
 
-| # | Question | Result | Change made |
+Tested 14 questions locally (labels, allergens, LTO, fees, GMP, language, exemptions, definitions, follow-ups, small talk, out-of-scope). What I found and changed:
+
+| # | Problem observed | Change | Result |
 |---|---|---|---|
-| 1 | | ✅ / ⚠️ / ❌ | |
-| 2 | | | |
+| 1 | "What must be on my cookie label?" listed 7 of the required items, with citations only at the end | Prompt: cite every bullet or drop it; do a second, list-specific search for "what are all the requirements" questions; topK 5 → 6 | 8 items, each cited. Still misses expiry date / storage (list spans pp. 5–9); see limitations |
+| 2 | "How much is the LTO fee?" answered "not found" **without searching**, even though the fee table was indexed | Prompt tweaks didn't fix it (gpt-4o-mini ignores "when to search" rules). Added a **router** in `route.ts`: step 1 requires a `searchDocs` call unless the message is small talk; later steps are the model's choice | Now searches and answers from the fee table |
+| 3 | "What about for bread sold unpackaged?" stretched *prepackaged* label rules to loose bread and cited "p. 5-8" | Prompt: documents cover prepackaged food; for unpackaged items report scope/exemptions only; no page ranges | Improved but not fully fixed; kept as a known weakness |
+| 4 | Out-of-scope questions (BIR permits) got "not found" plus "typically you need…" outside advice | Prompt: no general knowledge, may only name the agency | gpt-4o-mini still adds a sentence sometimes |
+| 5 | Every passage was labelled "Strong match"; `minScore` 0.35 filtered nothing | Measured scores: on-topic 0.75–0.88, off-topic ≤ 0.69. Set `minScore` 0.70; relabelled Strong ≥ 0.83, Good ≥ 0.77 | Off-topic searches now return nothing, so the bot says "not found" |
+| 6 | Citation named the wrong document (IgE definition came from AO 153, cited as AO 2014-0030) | Prompt: cite the document the passage came from | Fixed in retest |
 
 ## Demo questions
 
 **Good answers**
 
-1. …
+1. *Do I have to declare allergens like eggs, milk or nuts?* Correct list of the 8 allergen groups plus the "directly below the ingredients" placement rule [AO 2014-0030, p. 9].
+2. *What rules apply to the kitchen and equipment if I scale up production?* Grounded GMP summary (non-toxic, corrosion-resistant surfaces, 1 m spacing, calibrated cold storage), each point cited to AO 153.
+3. *What do I need to apply for an FDA License to Operate?* Full checklist from the Citizen's Charter, with DTI/SEC variants and fee rows.
+4. *Can I label my cookies only in Filipino?* "Yes: English, Filipino, or both" [AO 2014-0030, p. 12].
+5. *What's the penalty for violating labeling rules?* Misbranding under RA 9711, with the 12-month transition rule.
+6. *Hi! What can you help me with?* Answers without searching (tool correctly skipped).
 
 **Weak or interesting answers**
 
-1. …
+7. *How much is the LTO fee for a small manufacturer?* Searches and cites p. 1, but answers "Php 400", which is the **iodized salt** "small manufacturer" row. Food manufacturers are charged by capitalization (Php 1,000 for ₱250K and below). OCR flattened the fee table, so the row labels lost their headings.
+8. *What about for bread sold unpackaged?* (follow-up) Applies prepackaged label rules to loose bread instead of pointing to the "not prepackaged / immediate consumption" exemption on p. 14.
+9. *Do I need a BIR permit to sell cakes?* Correctly says it's not in the documents, but sometimes adds general advice anyway.
 
 ## Stretch features
 
-- Model-driven multi-search: up to 3 `searchDocs` calls per question, with query rewriting for follow-ups
+- Search router: the first step requires a `searchDocs` call unless the message is small talk; after that, the model can search up to 2 more times and rewrites follow-up questions into standalone queries
 - Live tool status in the chat ("Searching the documents for '…'")
 - Clickable inline `[p. N]` citations that highlight the matching source card
 - Deep links into the PDF page (`/docs/file.pdf#page=N`)
@@ -123,5 +136,6 @@ Result: **181 chunks** (min 83 / median 676 / p95 988 / max 1000 chars).
 ## Known limitations
 
 - Scanned PDFs, where pages are images, produce no text. The seed prints a warning for pages with no text.
-- Tables are flattened into plain text, so questions about table cells can come back garbled.
+- Tables are flattened into plain text, so questions about table cells can come back garbled (see demo question 7).
+- The course's Vocareum OpenAI key may be limited to the course period. If it expires, the live app stops answering until a new key is set in Vercel.
 - There's no per-IP rate limit. Set a monthly spend limit on your OpenAI key.

@@ -18,8 +18,8 @@ export default function OpengraphImage() {
           flexDirection: 'column',
           justifyContent: 'space-between',
           padding: 72,
-          background: '#fbf8f3',
-          color: '#1c1917',
+          background: '#fbf6ef',
+          color: '#2e211b',
           fontFamily: 'sans-serif',
         }}
       >
@@ -28,7 +28,7 @@ export default function OpengraphImage() {
             style={{
               width: 88,
               height: 88,
-              borderRadius: 22,
+              borderRadius: 44,
               background: corpus.accent,
               color: 'white',
               fontSize: 56,
@@ -42,7 +42,7 @@ export default function OpengraphImage() {
           </div>
           <div style={{ fontSize: 60, fontWeight: 700 }}>{corpus.appName}</div>
         </div>
-        <div style={{ fontSize: 38, lineHeight: 1.3, color: '#44403c', maxWidth: 1000 }}>{corpus.tagline}</div>
+        <div style={{ fontSize: 38, lineHeight: 1.3, color: '#54423a', maxWidth: 1000 }}>{corpus.tagline}</div>
         <div style={{ display: 'flex', fontSize: 26, color: corpus.accent, fontWeight: 600 }}>
           {`${manifest.totalPages} pages indexed · answers cite their pages`}
         </div>

@@ -2,125 +2,440 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------------
+   Theme inspired by "Frost Bakery" (templatemo 613): warm terracotta,
+   cream paper, Lora serif headings + Manrope body, fixed sidebar.
+   ------------------------------------------------------------------ */
 :root {
-  --accent: #b45309;
-  --accent-soft: #fde9cf;
-  --accent-fg: #ffffff;
-  --bg: #fbf8f3;
-  --surface: #ffffff;
-  --border: #e5e5e0;
-  --fg: #1c1917;
-  --fg-soft: #44403c;
-  --muted: #78716c;
-  --danger: #b91c1c;
-  color-scheme: light;
+  --accent: #b85c38; /* terracotta */
+  --accent-deep: #8e3f22;
+  --accent-soft: #f6e0d3;
+  --accent-fg: #fffaf5;
+  --bg: #fbf6ef; /* cream */
+  --bg-2: #f4ebdf; /* sand */
+  --surface: #fffdf9;
+  --border: #eadccb;
+  --fg: #2e211b; /* cocoa */
+  --fg-soft: #54423a;
+  --muted: #8a7568;
+  --danger: #b42318;
+  --shadow: 0 1px 2px rgba(80, 45, 25, 0.06), 0 8px 24px -12px rgba(80, 45, 25, 0.18);
+  --serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light; /* light-only by design */
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --accent: #f59e0b;
-    --accent-soft: #4a2c0a;
-    --accent-fg: #1c1004;
-    --bg: #121212;
-    --surface: #1c1c1b;
-    --border: #2e2e2c;
-    --fg: #f5f5f4;
-    --fg-soft: #d6d3d1;
-    --muted: #a8a29e;
-    --danger: #f87171;
-    color-scheme: dark;
-  }
+html,
+body {
+  min-height: 100%;
 }
-
-html, body { min-height: 100%; }
 body {
   background: var(--bg);
   color: var(--fg);
-  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--sans);
   -webkit-font-smoothing: antialiased;
 }
 
 @layer components {
-  .topbar { @apply sticky top-0 z-10 border-b backdrop-blur; border-color: var(--border); background: color-mix(in srgb, var(--bg) 85%, transparent); }
-  .logo, .avatar, .empty-badge {
-    @apply flex shrink-0 items-center justify-center rounded-lg font-bold;
-    background: var(--accent); color: var(--accent-fg);
+  /* ---------- layout ---------- */
+  .shell {
+    @apply min-h-dvh;
   }
-  .logo { @apply h-9 w-9 text-lg; }
-  .avatar { @apply mt-0.5 h-7 w-7 text-sm; }
-  .empty-badge { @apply mb-4 h-12 w-12 rounded-2xl text-2xl; }
+  .content {
+    @apply flex min-h-dvh flex-col lg:pl-[300px];
+  }
+  .chat {
+    @apply mx-auto w-full max-w-3xl flex-1 px-4 pb-44 pt-8 sm:px-6;
+  }
 
+  /* ---------- sidebar ---------- */
+  .sidebar {
+    @apply fixed inset-y-0 left-0 z-40 flex w-[300px] flex-col gap-6 overflow-y-auto border-r px-6 py-7 transition-transform duration-300;
+    background: var(--bg-2);
+    border-color: var(--border);
+    transform: translateX(-100%);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: var(--shadow);
+  }
+  @media (min-width: 1024px) {
+    .sidebar {
+      transform: none;
+    }
+  }
+  .scrim {
+    @apply pointer-events-none fixed inset-0 z-30 opacity-0 transition-opacity lg:hidden;
+    background: rgba(30, 18, 12, 0.45);
+  }
+  .scrim.show {
+    @apply pointer-events-auto opacity-100;
+  }
+  .brand {
+    @apply flex items-center gap-3;
+  }
+  .logo,
+  .avatar {
+    @apply flex shrink-0 items-center justify-center rounded-full font-semibold;
+    background: var(--accent);
+    color: var(--accent-fg);
+  }
+  .logo {
+    @apply h-11 w-11;
+  }
+  .avatar {
+    @apply mt-0.5 h-8 w-8 text-sm;
+    font-family: var(--serif);
+  }
+  .brand-name {
+    @apply text-lg font-semibold leading-tight;
+    font-family: var(--serif);
+  }
+  .brand-line {
+    @apply text-xs;
+    color: var(--muted);
+  }
+  .side-section h3 {
+    @apply mb-3 text-[11px] font-bold uppercase tracking-[0.14em];
+    color: var(--accent);
+  }
+  .path {
+    @apply space-y-3;
+  }
+  .path li {
+    @apply flex items-start gap-3 text-sm;
+  }
+  .path strong {
+    @apply block font-semibold;
+    font-family: var(--serif);
+  }
+  .path em {
+    @apply block text-xs not-italic;
+    color: var(--muted);
+  }
+  .path-num {
+    @apply flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold;
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .docs {
+    @apply space-y-2.5 text-sm;
+  }
+  .docs a {
+    @apply block leading-snug underline-offset-2 hover:underline;
+    color: var(--fg);
+  }
+  .docs span {
+    @apply text-xs;
+    color: var(--muted);
+  }
+  .side-note {
+    @apply mt-3 text-xs;
+    color: var(--muted);
+  }
+  .side-disclaimer {
+    @apply mt-auto border-t pt-4 text-[11px] leading-relaxed;
+    border-color: var(--border);
+    color: var(--muted);
+  }
+
+  /* ---------- mobile bar ---------- */
+  .mobile-bar {
+    @apply sticky top-0 z-20 flex items-center justify-between border-b px-3 py-2 backdrop-blur lg:hidden;
+    border-color: var(--border);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+  }
+  .icon-btn {
+    @apply flex h-9 w-9 items-center justify-center rounded-full;
+    color: var(--fg);
+  }
+  .icon-btn:hover {
+    background: var(--bg-2);
+  }
+
+  /* ---------- ticker ---------- */
+  .ticker {
+    @apply relative overflow-hidden border-b py-2.5;
+    background: var(--accent);
+    border-color: var(--accent-deep);
+    mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+  }
+  .ticker-track {
+    @apply flex w-max gap-8;
+    animation: ticker 60s linear infinite;
+  }
+  .ticker:hover .ticker-track {
+    animation-play-state: paused;
+  }
+  .ticker-item {
+    @apply whitespace-nowrap text-[13px] font-semibold tracking-wide;
+    color: var(--accent-fg);
+  }
+  .ticker-item span {
+    @apply mr-1 opacity-70;
+  }
+  .ticker-item:hover {
+    @apply underline underline-offset-4;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-track {
+      animation: none;
+    }
+  }
+
+  /* ---------- buttons & links ---------- */
   .btn-primary {
-    @apply rounded-xl px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40;
-    background: var(--accent); color: var(--accent-fg);
+    @apply rounded-full px-5 py-2.5 text-sm font-bold tracking-wide transition disabled:cursor-not-allowed disabled:opacity-40;
+    background: var(--accent);
+    color: var(--accent-fg);
   }
-  .btn-ghost { @apply rounded-lg border px-3 py-1.5 text-sm transition; border-color: var(--border); color: var(--fg-soft); }
-  .btn-ghost:hover { background: var(--surface); }
-  .link { @apply font-medium underline-offset-2 hover:underline; color: var(--accent); }
-
-  .empty { @apply flex flex-col items-center pt-6 text-center sm:pt-12; }
-  .suggestion {
-    @apply rounded-xl border px-4 py-3 text-left text-sm transition;
-    background: var(--surface); border-color: var(--border); color: var(--fg-soft);
+  .btn-primary:not(:disabled):hover {
+    background: var(--accent-deep);
   }
-  .suggestion:hover { border-color: var(--accent); color: var(--fg); }
-  .info-card { @apply rounded-xl border p-4; background: var(--surface); border-color: var(--border); color: var(--fg-soft); }
-  .info-card h3 { @apply mb-2 text-xs font-semibold uppercase tracking-wide; color: var(--muted); }
-  .info-card ul { @apply space-y-1.5; }
-  .info-card code { @apply rounded px-1 text-xs; background: var(--bg); }
+  .link {
+    @apply font-semibold underline-offset-2 hover:underline;
+    color: var(--accent);
+  }
 
+  /* ---------- empty state ---------- */
+  .hero {
+    @apply pt-2 sm:pt-6;
+  }
+  .eyebrow {
+    @apply text-[11px] font-bold uppercase tracking-[0.18em];
+    color: var(--accent);
+  }
+  .hero-title {
+    @apply mt-3 text-4xl font-semibold leading-[1.1] sm:text-5xl;
+    font-family: var(--serif);
+  }
+  .hero-sub {
+    @apply mt-4 max-w-xl text-[15px] leading-relaxed;
+    color: var(--fg-soft);
+  }
+  .steps {
+    @apply mt-9 grid gap-4 md:grid-cols-3;
+  }
+  .step-card {
+    @apply relative flex flex-col rounded-2xl border p-5;
+    background: var(--surface);
+    border-color: var(--border);
+    box-shadow: var(--shadow);
+  }
+  .step-num {
+    @apply text-3xl font-semibold italic;
+    font-family: var(--serif);
+    color: var(--accent);
+  }
+  .step-title {
+    @apply mt-1 text-xl font-semibold;
+    font-family: var(--serif);
+  }
+  .step-source {
+    @apply mt-0.5 text-[11px] font-bold uppercase tracking-wider;
+    color: var(--muted);
+  }
+  .step-blurb {
+    @apply mt-3 text-sm leading-relaxed;
+    color: var(--fg-soft);
+  }
+  .step-qs {
+    @apply mt-4 flex flex-1 flex-col justify-end gap-2;
+  }
+  .step-q {
+    @apply flex items-start justify-between gap-2 rounded-xl border border-dashed px-3 py-2 text-left text-[13px] leading-snug transition;
+    border-color: var(--border);
+    color: var(--fg);
+  }
+  .step-q span {
+    color: var(--accent);
+  }
+  .step-q:hover {
+    border-style: solid;
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .tips {
+    @apply mt-8 grid gap-3 text-sm md:grid-cols-3;
+    color: var(--fg-soft);
+  }
+  .tip {
+    @apply flex items-start gap-2.5;
+  }
+  .tip-icon {
+    @apply flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold;
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+  }
+
+  /* ---------- messages ---------- */
   .user-bubble {
-    @apply max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] leading-relaxed;
-    background: var(--accent); color: var(--accent-fg);
+    @apply max-w-[85%] whitespace-pre-wrap rounded-3xl rounded-br-md px-5 py-3 text-[15px] leading-relaxed;
+    background: var(--accent);
+    color: var(--accent-fg);
   }
-  .assistant { @apply flex gap-3; }
-
-  .tool-status { @apply mb-2 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs; border-color: var(--border); color: var(--muted); background: var(--surface); }
-  .tool-status.done { @apply border-dashed; }
-  .spinner { @apply inline-block h-3 w-3 animate-spin rounded-full border-2; border-color: var(--border); border-top-color: var(--accent); }
-
+  .assistant {
+    @apply flex gap-3;
+  }
+  .tool-status {
+    @apply mb-3 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs;
+    border-color: var(--border);
+    color: var(--muted);
+    background: var(--surface);
+  }
+  .tool-status.done {
+    @apply border-dashed;
+  }
+  .spinner {
+    @apply inline-block h-3 w-3 animate-spin rounded-full border-2;
+    border-color: var(--border);
+    border-top-color: var(--accent);
+  }
   .cite-chip {
-    @apply mx-0.5 inline-block whitespace-nowrap rounded px-1.5 py-px align-baseline text-[11px] font-semibold;
-    background: var(--accent-soft); color: var(--fg);
+    @apply mx-0.5 inline-block whitespace-nowrap rounded-full px-2 py-px align-baseline text-[11px] font-bold;
+    background: var(--accent-soft);
+    color: var(--accent-deep);
   }
-  button.cite-chip:hover { outline: 1px solid var(--accent); }
+  button.cite-chip:hover {
+    outline: 1px solid var(--accent);
+  }
 
-  .sources { @apply mt-3 rounded-xl border p-3; border-color: var(--border); background: color-mix(in srgb, var(--surface) 70%, var(--bg)); }
-  .sources-toggle { @apply flex w-full items-center gap-2 text-left text-xs font-semibold uppercase tracking-wide; color: var(--muted); }
-  .source-card { @apply scroll-mt-24 rounded-lg border p-3; background: var(--surface); border-color: var(--border); }
-  .source-card.flash { animation: flash 1.4s ease-out; }
-  .source-num { @apply flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold; background: var(--fg); color: var(--bg); }
-  .source-page { @apply rounded px-1.5 py-px font-semibold; background: var(--accent-soft); color: var(--fg); }
-  .rel { @apply ml-auto rounded-full px-2 py-px text-[10px] font-medium; }
-  .rel-strong { background: color-mix(in srgb, #16a34a 18%, transparent); color: var(--fg-soft); }
-  .rel-good { background: color-mix(in srgb, #ca8a04 18%, transparent); color: var(--fg-soft); }
-  .rel-weak { background: color-mix(in srgb, var(--muted) 18%, transparent); color: var(--muted); }
+  /* ---------- sources ---------- */
+  .sources {
+    @apply mt-4 rounded-2xl border p-4;
+    border-color: var(--border);
+    background: var(--bg-2);
+  }
+  .sources-toggle {
+    @apply flex w-full items-center gap-2 text-left text-[11px] font-bold uppercase tracking-[0.12em];
+    color: var(--accent);
+  }
+  .source-card {
+    @apply scroll-mt-24 rounded-xl border p-3.5;
+    background: var(--surface);
+    border-color: var(--border);
+  }
+  .source-card.flash {
+    animation: flash 1.4s ease-out;
+  }
+  .source-num {
+    @apply flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold;
+    background: var(--accent);
+    color: var(--accent-fg);
+  }
+  .source-page {
+    @apply rounded-full px-2 py-px font-bold;
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+  }
+  .rel {
+    @apply ml-auto rounded-full px-2 py-px text-[10px] font-semibold;
+  }
+  .rel-strong {
+    background: color-mix(in srgb, #3f8f4f 18%, transparent);
+    color: var(--fg-soft);
+  }
+  .rel-good {
+    background: color-mix(in srgb, #c98a1b 20%, transparent);
+    color: var(--fg-soft);
+  }
+  .rel-weak {
+    background: color-mix(in srgb, var(--muted) 18%, transparent);
+    color: var(--muted);
+  }
+  .error-box {
+    @apply flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3 text-sm;
+    border-color: var(--danger);
+    color: var(--danger);
+  }
 
-  .error-box { @apply flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-sm; border-color: var(--danger); color: var(--danger); }
-
-  .composer-wrap { @apply fixed inset-x-0 bottom-0 px-4 pb-3 pt-6; background: linear-gradient(to top, var(--bg) 70%, transparent); }
-  .composer { @apply flex items-end gap-2 rounded-2xl border p-2 shadow-sm; background: var(--surface); border-color: var(--border); }
-  .composer:focus-within { border-color: var(--accent); }
+  /* ---------- composer ---------- */
+  .composer-wrap {
+    @apply fixed bottom-0 right-0 left-0 px-4 pb-3 pt-8 lg:left-[300px];
+    background: linear-gradient(to top, var(--bg) 70%, transparent);
+  }
+  .composer {
+    @apply mx-auto flex max-w-3xl items-end gap-2 rounded-[28px] border p-2 pl-3;
+    background: var(--surface);
+    border-color: var(--border);
+    box-shadow: var(--shadow);
+  }
+  .composer:focus-within {
+    border-color: var(--accent);
+  }
   .composer-input {
-    @apply max-h-40 min-h-[40px] flex-1 resize-none bg-transparent px-2 py-2 text-[15px] outline-none;
+    @apply max-h-40 min-h-[42px] flex-1 resize-none bg-transparent px-2 py-2.5 text-[15px] outline-none;
     field-sizing: content;
   }
-  .composer-input::placeholder { color: var(--muted); }
+  .composer-input::placeholder {
+    color: var(--muted);
+  }
+  .composer-note {
+    @apply mx-auto mt-2 hidden max-w-3xl px-1 text-center text-[11px] sm:block;
+    color: var(--muted);
+  }
 
-  /* assistant markdown */
-  .md { @apply text-[15px] leading-relaxed; color: var(--fg); }
-  .md > * + * { @apply mt-3; }
-  .md ul { @apply list-disc space-y-1 pl-5; }
-  .md ol { @apply list-decimal space-y-1 pl-5; }
-  .md strong { @apply font-semibold; }
-  .md h1, .md h2, .md h3 { @apply font-semibold; }
-  .md blockquote { @apply border-l-2 pl-3 italic; border-color: var(--accent); color: var(--fg-soft); }
-  .md code { @apply rounded px-1 text-[13px]; background: var(--surface); }
-  .md table { @apply w-full border-collapse text-sm; }
-  .md th, .md td { @apply border px-2 py-1 text-left; border-color: var(--border); }
-  .md a { color: var(--accent); @apply underline; }
+  /* ---------- assistant markdown ---------- */
+  .md {
+    @apply text-[15px] leading-relaxed;
+    color: var(--fg);
+  }
+  .md > * + * {
+    @apply mt-3;
+  }
+  .md ul {
+    @apply list-disc space-y-1.5 pl-5;
+  }
+  .md ol {
+    @apply list-decimal space-y-1.5 pl-5;
+  }
+  .md li::marker {
+    color: var(--accent);
+  }
+  .md strong {
+    @apply font-semibold;
+  }
+  .md h1,
+  .md h2,
+  .md h3 {
+    @apply font-semibold;
+    font-family: var(--serif);
+  }
+  .md blockquote {
+    @apply border-l-2 pl-3 italic;
+    border-color: var(--accent);
+    color: var(--fg-soft);
+  }
+  .md code {
+    @apply rounded px-1 text-[13px];
+    background: var(--bg-2);
+  }
+  .md table {
+    @apply w-full border-collapse text-sm;
+  }
+  .md th,
+  .md td {
+    @apply border px-2 py-1 text-left;
+    border-color: var(--border);
+  }
+  .md a {
+    @apply underline;
+    color: var(--accent);
+  }
 }
 
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
 @keyframes flash {
-  0% { box-shadow: 0 0 0 3px var(--accent); }
-  100% { box-shadow: 0 0 0 0 transparent; }
+  0% {
+    box-shadow: 0 0 0 3px var(--accent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
 }

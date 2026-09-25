@@ -1,7 +1,7 @@
 'use client';
 
 import { useChat, type Message } from '@ai-sdk/react';
-import { useEffect, useRef, type FormEvent, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { corpus } from '@/lib/corpus';
 import manifest from '@/lib/manifest';
 import type { SearchOutput, SearchResult } from '@/lib/types';
@@ -83,51 +83,143 @@ function AssistantMessage({ m, busy }: { m: Message; busy: boolean }) {
   );
 }
 
-function EmptyState({ onPick }: { onPick: (q: string) => void }) {
-  const docs = manifest.documents;
+function Ticker({ onPick }: { onPick: (q: string) => void }) {
+  const items = [...corpus.ticker, ...corpus.ticker]; // duplicated for a seamless loop
   return (
-    <div className="empty">
-      <div className="empty-badge" aria-hidden>
-        {corpus.appName.charAt(0)}
-      </div>
-      <h2 className="text-xl font-semibold tracking-tight">What do you want to know?</h2>
-      <p className="mt-1 max-w-lg text-sm text-[color:var(--muted)]">{corpus.tagline}</p>
-
-      <div className="mt-6 grid w-full gap-2 sm:grid-cols-2">
-        {corpus.sampleQuestions.map((q) => (
-          <button key={q} type="button" className="suggestion" onClick={() => onPick(q)}>
-            {q}
+    <div className="ticker" aria-label="Popular topics">
+      <div className="ticker-track">
+        {items.map((t, i) => (
+          <button
+            key={i}
+            type="button"
+            className="ticker-item"
+            tabIndex={i < corpus.ticker.length ? 0 : -1}
+            aria-hidden={i >= corpus.ticker.length}
+            onClick={() => onPick(`What do the documents say about ${t.toLowerCase()}?`)}
+          >
+            <span aria-hidden>✦</span> {t}
           </button>
         ))}
       </div>
+    </div>
+  );
+}
 
-      <div className="mt-8 grid w-full gap-4 text-left text-sm sm:grid-cols-2">
-        <div className="info-card">
+function EmptyState({ onPick }: { onPick: (q: string) => void }) {
+  return (
+    <div className="hero">
+      <p className="eyebrow">Home Baker&apos;s Guide · Philippines</p>
+      <h2 className="hero-title">{corpus.heroTitle}</h2>
+      <p className="hero-sub">{corpus.tagline}</p>
+
+      <div className="steps">
+        {corpus.journey.map((j) => (
+          <article key={j.step} className="step-card">
+            <div className="step-num">{j.step}</div>
+            <h3 className="step-title">{j.title}</h3>
+            <p className="step-source">{j.source}</p>
+            <p className="step-blurb">{j.blurb}</p>
+            <div className="step-qs">
+              {j.questions.map((q) => (
+                <button key={q} type="button" className="step-q" onClick={() => onPick(q)}>
+                  {q}
+                  <span aria-hidden>→</span>
+                </button>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="tips">
+        <div className="tip">
+          <span className="tip-icon" aria-hidden>
+            ✓
+          </span>
+          <span>Ask one specific thing at a time.</span>
+        </div>
+        <div className="tip">
+          <span className="tip-icon" aria-hidden>
+            §
+          </span>
+          <span>
+            Every claim cites a page. Click <span className="cite-chip">p. 3</span> to see the passage.
+          </span>
+        </div>
+        <div className="tip">
+          <span className="tip-icon" aria-hidden>
+            ?
+          </span>
+          <span>If it isn&apos;t in the documents, I&apos;ll say so instead of guessing.</span>
+        </div>
+      </div>
+      <p className="mt-6 text-[11px] leading-relaxed text-[color:var(--muted)] sm:hidden">{corpus.disclaimer}</p>
+    </div>
+  );
+}
+
+function Sidebar({ open, onClose, onNew, hasChat }: { open: boolean; onClose: () => void; onNew: () => void; hasChat: boolean }) {
+  return (
+    <>
+      <div className={`scrim ${open ? 'show' : ''}`} onClick={onClose} aria-hidden />
+      <aside className={`sidebar ${open ? 'open' : ''}`} aria-label="About this guide">
+        <div className="brand">
+          <div className="logo" aria-hidden>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 14c0-4 3.6-7 8-7s8 3 8 7" />
+              <path d="M3 14h18l-1.5 5.2a1.5 1.5 0 0 1-1.4 1.1H5.9a1.5 1.5 0 0 1-1.4-1.1L3 14Z" />
+              <path d="M9 7.5c0-1.7 1.3-3 3-3s3 1.3 3 3" />
+            </svg>
+          </div>
+          <div>
+            <div className="brand-name">{corpus.appName}</div>
+            <div className="brand-line">{corpus.brandLine}</div>
+          </div>
+        </div>
+
+        <button type="button" className="btn-primary w-full" onClick={onNew} disabled={!hasChat}>
+          + New chat
+        </button>
+
+        <nav className="side-section">
+          <h3>Your path to selling</h3>
+          <ol className="path">
+            {corpus.journey.map((j) => (
+              <li key={j.step}>
+                <span className="path-num">{j.step}</span>
+                <span>
+                  <strong>{j.title}</strong>
+                  <em>{j.source}</em>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </nav>
+
+        <section className="side-section">
           <h3>What I&apos;ve read</h3>
-          {docs.length === 0 ? (
-            <p>No documents indexed yet — run <code>npm run seed</code>.</p>
+          {manifest.documents.length === 0 ? (
+            <p className="side-note">No documents indexed yet. Run npm run seed.</p>
           ) : (
-            <ul>
-              {docs.map((d) => (
+            <ul className="docs">
+              {manifest.documents.map((d) => (
                 <li key={d.source}>
-                  <span className="font-medium text-[color:var(--fg)]">{d.title}</span>
-                  <span className="text-[color:var(--muted)]"> · {d.pages} pages</span>
+                  <a href={`/docs/${encodeURIComponent(d.source)}`} target="_blank" rel="noreferrer">
+                    {d.title}
+                  </a>
+                  <span>{d.pages} pages</span>
                 </li>
               ))}
             </ul>
           )}
-          <p className="mt-3 text-xs text-[color:var(--muted)]">Checked against fda.gov.ph: {corpus.asOf}</p>
-        </div>
-        <div className="info-card">
-          <h3>How to get good answers</h3>
-          <ul>
-            <li>Ask one specific thing at a time.</li>
-            <li>Every claim cites a page — click <span className="cite-chip">p. 3</span> to see the passage.</li>
-            <li>If it isn&apos;t in the documents, I&apos;ll say so instead of guessing.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
+          <p className="side-note">
+            {manifest.totalPages} pages · checked against fda.gov.ph {corpus.asOf}
+          </p>
+        </section>
+
+        <p className="side-disclaimer">{corpus.disclaimer}</p>
+      </aside>
+    </>
   );
 }
 
@@ -136,15 +228,17 @@ export default function Page() {
     useChat({ api: '/api/chat' });
 
   const busy = status === 'submitted' || status === 'streaming';
+  const [navOpen, setNavOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    if (messages.length) bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, status]);
 
   const ask = (q: string) => {
     if (busy) return;
+    setNavOpen(false);
     append({ role: 'user', content: q });
   };
 
@@ -165,101 +259,102 @@ export default function Page() {
     stop();
     setMessages([]);
     setInput('');
+    setNavOpen(false);
     inputRef.current?.focus();
   };
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="topbar">
-        <div className="mx-auto flex w-full max-w-3xl items-center gap-3 px-4 py-3">
-          <div className="logo" aria-hidden>
-            {corpus.appName.charAt(0)}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-base font-semibold leading-tight">{corpus.appName}</h1>
-            <p className="truncate text-xs text-[color:var(--muted)]">
-              {manifest.totalPages
-                ? `${manifest.documents.length} document${manifest.documents.length === 1 ? '' : 's'} · ${manifest.totalPages} pages indexed`
-                : 'No documents indexed yet'}
-            </p>
-          </div>
-          {messages.length > 0 && (
-            <button type="button" onClick={reset} className="btn-ghost">
-              New chat
-            </button>
-          )}
-        </div>
-      </header>
+    <div className="shell">
+      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} onNew={reset} hasChat={messages.length > 0} />
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-40 pt-6">
-        {messages.length === 0 ? (
-          <EmptyState onPick={ask} />
-        ) : (
-          <ul className="space-y-6">
-            {messages.map((m, i) => (
-              <li key={m.id}>
-                {m.role === 'user' ? (
-                  <div className="flex justify-end">
-                    <div className="user-bubble">{m.content}</div>
-                  </div>
-                ) : (
-                  <AssistantMessage m={m} busy={busy && i === messages.length - 1} />
-                )}
-              </li>
-            ))}
-            {status === 'submitted' && messages.at(-1)?.role === 'user' && (
-              <li>
-                <div className="assistant">
-                  <div className="avatar" aria-hidden>
-                    {corpus.appName.charAt(0)}
-                  </div>
-                  <div className="tool-status">
-                    <span className="spinner" aria-hidden /> Thinking…
-                  </div>
-                </div>
-              </li>
-            )}
-            {error && (
-              <li className="error-box" role="alert">
-                <span>Something went wrong: {error.message || 'request failed'}.</span>
-                <button type="button" className="link" onClick={() => reload()}>
-                  Try again
-                </button>
-              </li>
-            )}
-          </ul>
-        )}
-        <div ref={bottomRef} />
-      </main>
-
-      <footer className="composer-wrap">
-        <form onSubmit={onSubmit} className="composer mx-auto max-w-3xl">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={handleInputChange}
-            onKeyDown={onKeyDown}
-            rows={1}
-            maxLength={2000}
-            autoFocus
-            placeholder={corpus.placeholder}
-            aria-label="Your question"
-            className="composer-input"
-          />
-          {busy ? (
-            <button type="button" onClick={stop} className="btn-primary" aria-label="Stop generating">
-              Stop
+      <div className="content">
+        <header className="mobile-bar">
+          <button type="button" className="icon-btn" aria-label="Open menu" onClick={() => setNavOpen(true)}>
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+          </button>
+          <span className="brand-name">{corpus.appName}</span>
+          {messages.length > 0 ? (
+            <button type="button" className="icon-btn" aria-label="New chat" onClick={reset}>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
             </button>
           ) : (
-            <button type="submit" disabled={!input.trim()} className="btn-primary">
-              Ask
-            </button>
+            <span className="w-9" />
           )}
-        </form>
-        <p className="mx-auto mt-2 max-w-3xl px-1 text-center text-[11px] text-[color:var(--muted)]">
-          {corpus.disclaimer}
-        </p>
-      </footer>
+        </header>
+
+        <Ticker onPick={ask} />
+
+        <main className="chat">
+          {messages.length === 0 ? (
+            <EmptyState onPick={ask} />
+          ) : (
+            <ul className="space-y-7">
+              {messages.map((m, i) => (
+                <li key={m.id}>
+                  {m.role === 'user' ? (
+                    <div className="flex justify-end">
+                      <div className="user-bubble">{m.content}</div>
+                    </div>
+                  ) : (
+                    <AssistantMessage m={m} busy={busy && i === messages.length - 1} />
+                  )}
+                </li>
+              ))}
+              {status === 'submitted' && messages.at(-1)?.role === 'user' && (
+                <li>
+                  <div className="assistant">
+                    <div className="avatar" aria-hidden>
+                      {corpus.appName.charAt(0)}
+                    </div>
+                    <div className="tool-status">
+                      <span className="spinner" aria-hidden /> Thinking…
+                    </div>
+                  </div>
+                </li>
+              )}
+              {error && (
+                <li className="error-box" role="alert">
+                  <span>Something went wrong: {error.message || 'request failed'}.</span>
+                  <button type="button" className="link" onClick={() => reload()}>
+                    Try again
+                  </button>
+                </li>
+              )}
+            </ul>
+          )}
+          <div ref={bottomRef} />
+        </main>
+
+        <footer className="composer-wrap">
+          <form onSubmit={onSubmit} className="composer">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={onKeyDown}
+              rows={1}
+              maxLength={2000}
+              placeholder={corpus.placeholder}
+              aria-label="Your question"
+              className="composer-input"
+            />
+            {busy ? (
+              <button type="button" onClick={stop} className="btn-primary" aria-label="Stop generating">
+                Stop
+              </button>
+            ) : (
+              <button type="submit" disabled={!input.trim()} className="btn-primary">
+                Ask
+              </button>
+            )}
+          </form>
+          <p className="composer-note">{corpus.disclaimer}</p>
+        </footer>
+      </div>
     </div>
   );
 }
