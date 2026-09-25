@@ -11,41 +11,47 @@ A public, streaming chat app for **home-based bakers in the Philippines who want
 ## How it works
 
 ```
- browser (useChat)                    /api/chat (server only)                 Upstash Vector
- ───────────────────                  ───────────────────────                 ──────────────
- question ───────────────────────▶    streamText(gpt-4o-mini, tools)
-                                        │ model decides: search or not?
-                                        ├─ small talk → answers directly
-                                        └─ substantive → searchDocs({query}) ──▶ embed query
-                                                                                 topK=5, cosine
-                        ◀── streamed tool status ──┘      results ≥ minScore ◀── chunk text + metadata
- tokens stream in ◀────── answer with [p. N] cites (up to 3 searches, then answer)
+ browser (useChat)                    /api/chat (server only)                        Upstash Vector
+ ───────────────────                  ───────────────────────                        ──────────────
+ question ───────────────────────▶    router: small talk?
+                                        ├─ yes → streamText(gpt-4o-mini, tools: auto)
+                                        │        → usually answers without searching
+                                        └─ no  → step 1: streamText(toolChoice: required)
+                                                   → model writes searchDocs({query}) ───▶ embed query
+                                                                                          topK=6, cosine
+                        ◀── streamed tool status ───────┘   results ≥ 0.70 ◀──────────── chunk + metadata
+                                                 step 2+: streamText(tools: auto)
+                                                   → may search again (max 2) or answer
+ tokens stream in ◀────── answer with [AO …, p. N] cites
  Sources panel  ◀──────── tool results rendered under the answer
 ```
 
-- **RAG is a tool call, not prepended context.** The model gets one tool, `searchDocs`. It calls it for substantive questions, rewrites follow-ups ("what about for contractors?") into self-contained queries, can search again with different wording if the first search is thin, and skips the tool for greetings or "what can you do?". The UI shows "Answered without searching the documents" when that happens.
-- **Grounding.** The system prompt restricts answers to the retrieved passages, requires a `[p. N]` cite on every claim, and tells the model to say *"I couldn't find that in the documents"* rather than fall back on outside knowledge. Passages below a similarity floor (`minScore`) are dropped so weak matches don't pass as evidence.
+- **RAG is a tool call, not prepended context.** The model gets one tool, `searchDocs`, writes its own query (rewriting follow-ups like "what about unpackaged bread?" into standalone searches), and can search again with different wording. Testing showed gpt-4o-mini sometimes skipped the tool and answered "not found" from memory, so a small router makes the **first** step require a `searchDocs` call unless the message is small talk (greetings, thanks, "what can you do?"). For small talk the tool is available but unused, and the UI shows "Answered without searching the documents".
+- **Grounding.** The system prompt restricts answers to the retrieved passages, requires a `[AO …, p. N]` cite on every bullet, and tells the model to say *"I couldn't find that in the documents"* rather than fall back on outside knowledge. Passages below a similarity floor (`minScore`) are dropped so weak matches don't pass as evidence.
 - **Sources.** Every answer lists the passages it used: document, page, section heading, a relevance label, and the passage text. Inline `[p. N]` chips scroll to and highlight the matching card. "Open page N ↗" opens the PDF at that page.
-- **No secrets in the client.** `OPENAI_API_KEY` and `UPSTASH_*` are read only in `app/api/chat/route.ts` and `lib/seed.ts`. Nothing is `NEXT_PUBLIC_`. The files the browser imports (`lib/corpus.ts`, `lib/corpus-manifest.json`) contain no keys.
+- **No secrets in the client.** `OPENAI_API_KEY`, `OPENAI_BASE_URL` and `UPSTASH_*` are read only on the server (`lib/openai.ts`, `app/api/chat/route.ts`, `lib/seed.ts`). Nothing is `NEXT_PUBLIC_`, and the files the browser imports (`lib/corpus.ts`, `lib/manifest.ts`) contain no keys. I checked the production client bundle for key names and found none.
 
 ## Project structure
 
 ```
 app/
-  api/chat/route.ts     # streamText + searchDocs tool, system prompt, abuse guards
-  page.tsx              # chat UI: empty state, streaming, tool status, sources
-  layout.tsx            # title, description, Open Graph / Twitter metadata
+  api/chat/route.ts     # router + streamText + searchDocs tool, system prompt, abuse guards
+  page.tsx              # chat UI: sidebar, topic ticker, step cards, streaming, tool status, sources
+  layout.tsx            # title, description, Open Graph / Twitter metadata, fonts
   opengraph-image.tsx   # generated 1200×630 link-preview image
-  globals.css           # design tokens (light + dark) and component styles
+  globals.css           # design tokens and component styles (light theme)
 components/
-  Markdown.tsx          # renders answers, turns [p. N] into clickable chips
-  Sources.tsx           # source cards
+  Markdown.tsx          # renders answers, turns [AO …, p. N] into clickable chips
+  Sources.tsx           # source cards with relevance labels and "Open page N" links
 lib/
-  corpus.ts             # ← app name, domain, sample questions, topK, minScore, chunk settings
+  corpus.ts             # ← app name, copy, document titles, topK, minScore, chunk settings
   seed.ts               # PDF → pages → clean → chunk → embed → upsert
+  openai.ts             # OpenAI provider (supports OPENAI_BASE_URL for gateway keys)
+  load-env.ts           # loads .env.local for the standalone seed script
+  manifest.ts           # typed access to corpus-manifest.json
   corpus-manifest.json  # written by the seed; powers "What I've read" in the UI
   types.ts
-data/                   # ← put your PDFs here
+data/                   # source PDFs (OCR'd, searchable)
 public/docs/            # seed copies the PDFs here so sources can link to pages
 ```
 
@@ -122,17 +128,14 @@ Tested 14 questions locally (labels, allergens, LTO, fees, GMP, language, exempt
 8. *What about for bread sold unpackaged?* (follow-up) Applies prepackaged label rules to loose bread instead of pointing to the "not prepackaged / immediate consumption" exemption on p. 14.
 9. *Do I need a BIR permit to sell cakes?* Correctly says it's not in the documents, but sometimes adds general advice anyway.
 
-## Stretch features
+## Stretch goals
 
-- Search router: the first step requires a `searchDocs` call unless the message is small talk; after that, the model can search up to 2 more times and rewrites follow-up questions into standalone queries
-- Live tool status in the chat ("Searching the documents for '…'")
-- Clickable inline `[p. N]` citations that highlight the matching source card
-- Deep links into the PDF page (`/docs/file.pdf#page=N`)
-- Relevance labels and a similarity floor, so answers are honest about weak matches
-- `seed:dry` preview and chunk-length statistics for checking chunking before spending on embeddings
-- Bakery-themed UI inspired by the free [Frost Bakery template by templatemo](https://templatemo.com/tm-613-frost-bakery): terracotta palette, Lora + Manrope fonts, fixed sidebar with the "path to selling" and the indexed documents, a clickable topic ticker, and step cards with starter questions
-- Generated Open Graph image and a mobile layout with a slide-out menu
-- Abuse guards on the public endpoint: input length cap, history window, `maxTokens`
+The brief says to pick at most two and do them well. I picked:
+
+1. **Source-PDF download from citation.** Every source card has an "Open page N ↗" link that opens the original PDF at the cited page (`/docs/<file>.pdf#page=N`), and inline citation chips like `[AO 2014-0030, p. 9]` scroll to and highlight the matching card. A baker can check the exact legal wording in one click.
+2. **Multi-PDF support.** Four documents are indexed together. Every chunk carries `title`, `source`, `page` and `section` metadata, citations name the right document, and the sidebar lists each document with its page count and a link to the PDF.
+
+Other polish (not claimed as stretch goals): a mobile layout with a slide-out menu, suggested-question step cards and a clickable topic ticker, live search-status chips, relevance labels, a `seed:dry` chunk preview, a generated Open Graph image, and basic abuse guards (input length cap, history window, `maxTokens`). The visual design is inspired by the free [Frost Bakery template by templatemo](https://templatemo.com/tm-613-frost-bakery).
 
 ## Known limitations
 
